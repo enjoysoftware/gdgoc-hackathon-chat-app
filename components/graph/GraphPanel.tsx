@@ -5,6 +5,7 @@ import { X, Hash } from 'lucide-react';
 import { GraphAnalysisResponse } from '@/types/graph';
 import GraphVisualization from './GraphVisualization';
 import GraphTimeline from './GraphTimeline';
+import TimelineGraphGenerator from './TimelineGraphGenerator';
 
 interface GraphPanelProps {
   isOpen: boolean;
@@ -19,7 +20,7 @@ export default function GraphPanel({
   graphData,
   channelId
 }: GraphPanelProps) {
-  const [activeTab, setActiveTab] = useState<'graph' | 'timeline'>('graph');
+  const [activeTab, setActiveTab] = useState<'graph' | 'timeline' | 'ai-graph'>('graph');
 
   return (
     <div
@@ -85,6 +86,16 @@ export default function GraphPanel({
         >
           タイムライン
         </button>
+        <button
+          onClick={() => setActiveTab('ai-graph')}
+          className={`px-6 py-3 text-sm font-medium transition-colors ${
+            activeTab === 'ai-graph'
+              ? 'border-b-2 border-blue-500 text-white bg-[#1e2f4d]/30'
+              : 'text-gray-400 hover:text-white hover:bg-gray-800/30'
+          }`}
+        >
+          AIグラフ
+        </button>
       </div>
 
       {/* Content */}
@@ -95,8 +106,13 @@ export default function GraphPanel({
             edges={graphData.edges}
             renderHints={graphData.renderHints}
           />
-        ) : (
+        ) : activeTab === 'timeline' ? (
           <GraphTimeline timeline={graphData.timeline} />
+        ) : (
+          <TimelineGraphGenerator
+            timeline={graphData.timeline}
+            problemId={graphData.problem_id}
+          />
         )}
       </div>
 
