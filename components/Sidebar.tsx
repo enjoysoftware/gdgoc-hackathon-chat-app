@@ -16,7 +16,7 @@ interface SidebarProps {
 
 export default function Sidebar({ channelId, channels }: SidebarProps) {
   const router = useRouter();
-  const { user, logout } = useAuth();
+  const { user, logout, loginWithGoogle } = useAuth();
 
   return (
     <div className="w-64 bg-[#111d33] border-r border-gray-800 flex flex-col">
@@ -96,10 +96,7 @@ export default function Sidebar({ channelId, channels }: SidebarProps) {
           </div>
         ) : (
           <button
-            onClick={() => {
-              const provider = new (require("firebase/auth").GoogleAuthProvider)();
-              require("firebase/auth").signInWithPopup(require("@/lib/firebase").auth, provider);
-            }}
+            onClick={loginWithGoogle}
             className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded flex items-center justify-center gap-2 text-sm transition-colors"
           >
             Googleでログイン
