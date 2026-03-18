@@ -15,20 +15,11 @@ import Sidebar from "./Sidebar";
 import MessageInput from "./MessageInput";
 import { useAuth } from "@/hooks/useAuth";
 import Login from "./Login";
-
-interface Message {
-  id: string;
-  text: string;
-  senderId: string;
-  senderName: string;
-  senderAvatar: string;
-  timestamp: any;
-}
-
-interface UserProfile {
-  displayName: string;
-  photoURL: string;
-}
+import { Message, UserProfile } from "@/types/message";
+import { GraphAnalysisResponse } from "@/types/graph";
+import { parseMessageWithMentions, MessagePart, MentionPart } from "@/lib/utils/mentions";
+import ProblemTag from "./ui/ProblemTag";
+import GraphPanel from "./graph/GraphPanel";
 
 interface ChatProps {
   channelId: string;
@@ -45,6 +36,11 @@ export default function Chat({ channelId }: ChatProps) {
   const [userProfiles, setUserProfiles] = useState<Record<string, UserProfile>>({});
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { user, loading } = useAuth();
+
+  // Graph panel state
+  const [graphPanelOpen, setGraphPanelOpen] = useState(false);
+  const [graphData, setGraphData] = useState<GraphAnalysisResponse | null>(null);
+  const [loadingGraph, setLoadingGraph] = useState(false);
 
   // Get current channel name
   const currentChannelName = CHANNELS.find(c => c.id === channelId)?.name || channelId;
@@ -98,6 +94,51 @@ export default function Chat({ channelId }: ChatProps) {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // Handle problem analysis
+  const handleAnalyzeProblem = async (problemId: string) => {
+    setLoadingGraph(true);
+
+    try {
+      // Filter messages containing @problemX
+      const problemMessages = messages.filter(msg =>
+        msg.text.toLowerCase().includes(`@${problemId.toLowerCase()}`)
+      );
+
+      if (problemMessages.length === 0) {
+        alert('このチャンネルには該当する問題メッセージがありません');
+        return;
+      }
+
+      // Call API
+      const response = await fetch('/api/analyze-problem', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          problem_id: problemId,
+          messages: problemMessages.map(msg => ({
+            id: msg.id,
+            text: msg.text,
+            timestamp: msg.timestamp?.toDate().toISOString() || new Date().toISOString(),
+            user: msg.senderName,
+            mentions: [problemId],
+            channel: channelId
+          }))
+        })
+      });
+
+      if (!response.ok) throw new Error('Analysis failed');
+
+      const data: GraphAnalysisResponse = await response.json();
+      setGraphData(data);
+      setGraphPanelOpen(true);
+    } catch (error) {
+      console.error('Failed to analyze problem:', error);
+      alert('問題分析に失敗しました');
+    } finally {
+      setLoadingGraph(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -165,7 +206,17 @@ export default function Chat({ channelId }: ChatProps) {
                         : "bg-[#1e2f4d] text-gray-200 rounded-tl-none"
                     }`}
                   >
-                    {msg.text}
+                    {parseMessageWithMentions(msg.text).map((part: MessagePart, idx: number) =>
+                      typeof part === 'string' ? (
+                        <span key={idx}>{part}</span>
+                      ) : (
+                        <ProblemTag
+                          key={idx}
+                          problemId={part.problemId}
+                          onClick={handleAnalyzeProblem}
+                        />
+                      )
+                    )}
                   </div>
                 </div>
               </div>
@@ -176,6 +227,26 @@ export default function Chat({ channelId }: ChatProps) {
 
         <MessageInput channelId={channelId} />
       </div>
+
+      {/* Graph Panel */}
+      {graphData && (
+        <GraphPanel
+          isOpen={graphPanelOpen}
+          onClose={() => setGraphPanelOpen(false)}
+          graphData={graphData}
+          channelId={channelId}
+        />
+      )}
+
+      {/* Loading overlay */}
+      {loadingGraph && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-[#1e2f4d] p-6 rounded-lg">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
+            <p className="text-white mt-4">問題を分析中...</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
