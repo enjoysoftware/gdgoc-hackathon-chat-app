@@ -2,17 +2,20 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 
 export async function POST(request: Request) {
   const apiKey = process.env.GEMINI_API_KEY;
+  console.log('Request received at /api/generate-timeline-graph');
   if (!apiKey) {
+    console.error('GEMINI_API_KEY is not set');
     return new Response('GEMINI_API_KEY is not set', { status: 500 });
   }
 
   const { prompt } = await request.json();
+  console.log('Prompt:', prompt);
   if (!prompt || typeof prompt !== 'string') {
     return new Response('Invalid request: prompt is required', { status: 400 });
   }
 
   const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+  const model = genAI.getGenerativeModel({ model: 'gemini-3-flash-preview'} );
 
   const stream = new ReadableStream({
     async start(controller) {
@@ -25,6 +28,7 @@ export async function POST(request: Request) {
           }
         }
       } catch (error) {
+        console.error('Stream Error:', error);
         controller.error(error);
       } finally {
         controller.close();
