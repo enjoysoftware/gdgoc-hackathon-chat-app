@@ -1,6 +1,6 @@
-// Extract @problemX mentions from text
+// Extract #problemX mentions from text
 export function extractMentions(text: string): string[] {
-  const matches = text.match(/@(problem\w+)/gi) || [];
+  const matches = text.match(/#(problem\w+)/gi) || [];
   return [...new Set(matches.map(m => m.slice(1).toLowerCase()))]; // dedupe and normalize
 }
 
@@ -14,7 +14,7 @@ export type MessagePart = string | MentionPart;
 
 export function parseMessageWithMentions(text: string): MessagePart[] {
   const parts: MessagePart[] = [];
-  const regex = /@(problem\w+)/gi;
+  const regex = /#(problem\w+)/gi;
   let lastIndex = 0;
   let match;
 

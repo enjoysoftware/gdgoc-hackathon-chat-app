@@ -53,8 +53,8 @@ export function calculateConfidence(message: ProblemMessage, type: NodeType): nu
   // +0.1 per matched keyword (max 0.3)
   score += Math.min(matchedKeywords.length * 0.1, 0.3);
 
-  // Boost if multiple @problem mentions
-  const mentionCount = (message.text.match(/@problem\w+/gi) || []).length;
+  // Boost if multiple #problem mentions
+  const mentionCount = (message.text.match(/#problem\w+/gi) || []).length;
   if (mentionCount > 1) score += 0.1;
 
   // Boost if contains code block
