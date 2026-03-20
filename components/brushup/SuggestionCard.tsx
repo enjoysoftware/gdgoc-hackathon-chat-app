@@ -1,46 +1,26 @@
 "use client";
 
-import {
-  Target,
-  AlertCircle,
-  User,
-  Clock,
-  MapPin,
-  Wrench,
-} from "lucide-react";
-import { BrushUpSuggestion, SuggestionCategory } from "@/types/brushup";
+import { MessageCircleQuestion } from "lucide-react";
+import { BrushUpSuggestion } from "@/types/brushup";
 
-const CATEGORY_CONFIG: Record<
-  SuggestionCategory,
-  { icon: React.ElementType; color: string; bgColor: string }
-> = {
-  why: { icon: Target, color: "text-amber-400", bgColor: "bg-amber-400/10" },
-  what: {
-    icon: AlertCircle,
-    color: "text-red-400",
-    bgColor: "bg-red-400/10",
-  },
-  who: { icon: User, color: "text-blue-400", bgColor: "bg-blue-400/10" },
-  when: { icon: Clock, color: "text-green-400", bgColor: "bg-green-400/10" },
-  where: {
-    icon: MapPin,
-    color: "text-purple-400",
-    bgColor: "bg-purple-400/10",
-  },
-  how: { icon: Wrench, color: "text-teal-400", bgColor: "bg-teal-400/10" },
-};
+const COLORS = [
+  { text: "text-amber-400", bg: "bg-amber-400/10" },
+  { text: "text-blue-400", bg: "bg-blue-400/10" },
+  { text: "text-purple-400", bg: "bg-purple-400/10" },
+];
 
 interface SuggestionCardProps {
   suggestion: BrushUpSuggestion;
+  index: number;
   onClick: (suggestion: BrushUpSuggestion) => void;
 }
 
 export default function SuggestionCard({
   suggestion,
+  index,
   onClick,
 }: SuggestionCardProps) {
-  const config = CATEGORY_CONFIG[suggestion.category];
-  const Icon = config.icon;
+  const color = COLORS[index % COLORS.length];
 
   return (
     <button
@@ -50,12 +30,12 @@ export default function SuggestionCard({
     >
       <div className="flex items-center gap-2 mb-1.5">
         <div
-          className={`w-6 h-6 rounded-full ${config.bgColor} flex items-center justify-center`}
+          className={`w-6 h-6 rounded-full ${color.bg} flex items-center justify-center`}
         >
-          <Icon size={13} className={config.color} />
+          <MessageCircleQuestion size={13} className={color.text} />
         </div>
-        <span className={`text-xs font-bold ${config.color}`}>
-          {suggestion.label}
+        <span className={`text-xs font-bold ${color.text}`}>
+          {suggestion.category}
         </span>
       </div>
       <p className="text-xs text-gray-400 group-hover:text-gray-300 transition-colors leading-relaxed">

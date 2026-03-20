@@ -66,7 +66,7 @@ export default function Chat({ channelId }: ChatProps) {
   };
 
   const handleSuggestionClick = (suggestion: BrushUpSuggestion) => {
-    setNewMessage((prev) => prev + `\n【${suggestion.label}】`);
+    setNewMessage((prev) => prev + `\n【${suggestion.category}】`);
   };
 
   const handleAfterSend = () => {

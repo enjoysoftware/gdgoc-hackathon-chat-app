@@ -1,42 +1,12 @@
 "use client";
 
-import {
-  X,
-  Sparkles,
-  CheckCircle2,
-  AlertTriangle,
-  Target,
-  AlertCircle,
-  User,
-  Clock,
-  MapPin,
-  Wrench,
-} from "lucide-react";
-import {
-  BrushUpAnalysis,
-  BrushUpSuggestion,
-  SuggestionCategory,
-} from "@/types/brushup";
+import { X, Sparkles, AlertTriangle, MessageCircleQuestion } from "lucide-react";
+import { BrushUpAnalysis, BrushUpSuggestion } from "@/types/brushup";
 
-const CATEGORY_CONFIG: Record<
-  SuggestionCategory,
-  { icon: React.ElementType; color: string; label: string }
-> = {
-  why: { icon: Target, color: "text-amber-400", label: "なぜ（目的）" },
-  what: { icon: AlertCircle, color: "text-red-400", label: "何が（事象）" },
-  who: { icon: User, color: "text-blue-400", label: "誰が（対象）" },
-  when: { icon: Clock, color: "text-green-400", label: "いつ（時期）" },
-  where: { icon: MapPin, color: "text-purple-400", label: "どこで（場所）" },
-  how: { icon: Wrench, color: "text-teal-400", label: "どのように（方法）" },
-};
-
-const ALL_CATEGORIES: SuggestionCategory[] = [
-  "why",
-  "what",
-  "who",
-  "when",
-  "where",
-  "how",
+const COLORS = [
+  { text: "text-amber-400", bg: "bg-amber-400/10" },
+  { text: "text-blue-400", bg: "bg-blue-400/10" },
+  { text: "text-purple-400", bg: "bg-purple-400/10" },
 ];
 
 interface BrushUpDetailModalProps {
@@ -52,10 +22,6 @@ export default function BrushUpDetailModal({
   onClose,
   onSuggestionClick,
 }: BrushUpDetailModalProps) {
-  const missingMap = new Map(
-    analysis.suggestions.map((s) => [s.category, s])
-  );
-
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-[#0f1d35] border border-gray-700 rounded-xl w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
@@ -68,7 +34,7 @@ export default function BrushUpDetailModal({
             <div>
               <h2 className="text-lg font-bold text-white">詳細分析</h2>
               <p className="text-xs text-gray-400">
-                5W1H構造化チェック・ソクラテス問答法
+                不足情報のチェック
               </p>
             </div>
           </div>
@@ -92,59 +58,42 @@ export default function BrushUpDetailModal({
             </div>
           </div>
 
-          {/* Summary */}
-          <div>
-            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
-              総合評価
-            </h3>
-            <p className="text-sm text-gray-200">{analysis.summary}</p>
-          </div>
-
-          {/* 5W1H Checklist */}
+          {/* Suggestions */}
           <div>
             <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">
-              5W1H チェックリスト
+              追記すべき情報（{analysis.suggestions.length}件）
             </h3>
             <div className="space-y-2">
-              {ALL_CATEGORIES.map((cat) => {
-                const config = CATEGORY_CONFIG[cat];
-                const Icon = config.icon;
-                const missing = missingMap.get(cat);
-                const isPresent = !missing;
+              {analysis.suggestions.map((suggestion, idx) => {
+                const color = COLORS[idx % COLORS.length];
 
                 return (
                   <div
-                    key={cat}
-                    className={`flex items-start gap-3 p-3 rounded-lg border transition-colors ${
-                      isPresent
-                        ? "bg-green-500/5 border-green-500/20"
-                        : "bg-[#1a2a47] border-gray-700/50 hover:border-amber-500/30 cursor-pointer"
-                    }`}
-                    onClick={() => {
-                      if (missing) {
-                        onSuggestionClick(missing);
-                      }
-                    }}
+                    key={`${suggestion.category}-${idx}`}
+                    className="flex items-start gap-3 p-3 rounded-lg border bg-[#1a2a47] border-gray-700/50 hover:border-amber-500/30 cursor-pointer transition-colors"
+                    onClick={() => onSuggestionClick(suggestion)}
                   >
                     <div className="flex items-center gap-2 min-w-[140px]">
-                      {isPresent ? (
-                        <CheckCircle2 size={16} className="text-green-400" />
-                      ) : (
-                        <AlertTriangle size={16} className="text-amber-400" />
-                      )}
-                      <Icon size={14} className={config.color} />
-                      <span className={`text-xs font-bold ${config.color}`}>
-                        {config.label}
+                      <AlertTriangle size={16} className="text-amber-400" />
+                      <MessageCircleQuestion size={14} className={color.text} />
+                      <span className={`text-xs font-bold ${color.text}`}>
+                        {suggestion.category}
                       </span>
                     </div>
                     <p className="text-xs text-gray-400 flex-1">
-                      {isPresent
-                        ? "確認済み"
-                        : missing.question}
+                      {suggestion.question}
                     </p>
                   </div>
                 );
               })}
+
+              {analysis.suggestions.length === 0 && (
+                <div className="p-3 rounded-lg border bg-green-500/5 border-green-500/20">
+                  <p className="text-sm text-green-400">
+                    この質問は十分に構造化されています！
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>

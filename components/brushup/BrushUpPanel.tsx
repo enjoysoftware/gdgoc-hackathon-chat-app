@@ -71,8 +71,7 @@ export default function BrushUpPanel({
         {analysis && !isAnalyzing && (
           <>
             <p className="text-sm text-gray-300 mb-3">
-              {analysis.summary ||
-                "現在の下書きに基づき、より的確な回答を得るために詳細を補足しませんか？"}
+              現在の下書きに基づき、より的確な回答を得るために詳細を補足しませんか？
             </p>
 
             {analysis.suggestions.length > 0 ? (
@@ -81,6 +80,7 @@ export default function BrushUpPanel({
                   <SuggestionCard
                     key={`${suggestion.category}-${idx}`}
                     suggestion={suggestion}
+                    index={idx}
                     onClick={onSuggestionClick}
                   />
                 ))}

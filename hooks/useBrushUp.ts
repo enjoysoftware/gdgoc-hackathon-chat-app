@@ -3,9 +3,12 @@
 import { useState, useCallback } from "react";
 import { BrushUpAnalysis } from "@/types/brushup";
 
+const SYSTEM_PROMPT = `あなたは長年の経験を持つベテランエンジニアです。
+チームメンバーがチャットに投稿しようとしている「障害報告や質問の下書き」を読み、より早く的確な問題解決に繋がるように、不足している情報を引き出してください。
+ユーザーが下書きに追記すべき情報を、具体的な質問（サジェスト）として最大3点提案してください。`;
+
 const buildPrompt = (draftText: string) =>
-  `あなたは新人ITエンジニアの質問を改善する支援AIアシスタントです。
-以下の質問の下書きを5W1Hの観点とソクラテス問答法で分析し、不足している情報や改善点を提案してください。
+  `${SYSTEM_PROMPT}
 
 ## 下書き
 """
@@ -14,20 +17,12 @@ ${draftText}
 
 ## 出力形式
 以下のJSON形式のみを出力してください。マークダウンのコードブロックや説明文は一切付けず、JSONだけを返してください。
-{"summary":"下書きの評価を1文で","suggestions":[{"category":"why","label":"なぜ（目的）","question":"具体的な質問文","isPresent":false}]}
-
-## categoryの種類と分析基準
-- why: 質問の目的・背景が明確か（ラベル：なぜ（目的））
-- what: 何が問題なのかが具体的か（ラベル：何が（事象））
-- who: 誰の視点・誰に聞いているかが明確か（ラベル：誰が（対象））
-- when: いつ発生したか、時間的な情報があるか（ラベル：いつ（時期））
-- where: どこで発生しているか（環境、コード箇所等）（ラベル：どこで（場所））
-- how: どのように発生するか、再現手順があるか（ラベル：どのように（方法））
+{"suggestions":[{"category":"質問の短いカテゴリラベル","question":"ユーザーに問いかける具体的で簡潔な質問文"}]}
 
 ## ルール
-- suggestionsには、下書きに不足している要素（isPresent: false）のみを含めてください（最大4つまで）。
-- 各questionは、ユーザーが答えることで質問が改善されるような、具体的な問いかけにしてください。
-- ソクラテス問答法の精神に基づき、ユーザー自身が気づきを得られるような問いにしてください。`;
+- suggestionsは最大3つまで。
+- categoryは短いカテゴリラベル（例：「なぜ（目的）」「対象（どこで）」「いつ（発生条件）」など）。
+- questionはユーザーが答えることで質問が改善されるような、具体的で簡潔な問いかけにしてください。`;
 
 export function useBrushUp() {
   const [analysis, setAnalysis] = useState<BrushUpAnalysis | null>(null);
@@ -47,7 +42,11 @@ export function useBrushUp() {
         body: JSON.stringify({ prompt: buildPrompt(draftText) }),
       });
 
-      if (!response.ok) throw new Error("API request failed");
+      if (!response.ok) {
+        const errorBody = await response.text();
+        console.error("API error response:", response.status, errorBody);
+        throw new Error(`API request failed: ${response.status}`);
+      }
 
       const reader = response.body?.getReader();
       if (!reader) throw new Error("No response body");
