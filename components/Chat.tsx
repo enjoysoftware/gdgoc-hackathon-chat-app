@@ -10,6 +10,7 @@ import {
   onSnapshot,
   doc,
   setDoc,
+  deleteDoc,
 } from "firebase/firestore";
 import { Hash, Search, Bell, Info, Users, X } from "lucide-react";
 import Sidebar from "./Sidebar";
@@ -54,6 +55,9 @@ export default function Chat({ channelId }: ChatProps) {
   // Dynamic channels state
   const [dynamicChannels, setDynamicChannels] = useState<{ id: string; name: string }[]>([]);
   const [showMemberList, setShowMemberList] = useState(false);
+
+  // Context menu state for message deletion
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; messageId: string } | null>(null);
 
   // Message input state
   const [newMessage, setNewMessage] = useState("");
@@ -124,6 +128,21 @@ export default function Chat({ channelId }: ChatProps) {
     ...CHANNELS,
     ...dynamicChannels.filter((dc) => !CHANNELS.some((c) => c.id === dc.id)),
   ];
+
+  // Delete message handler
+  const handleDeleteMessage = async (messageId: string) => {
+    await deleteDoc(doc(db, "channels", channelId, "messages", messageId));
+    setContextMenu(null);
+  };
+
+  // Close context menu on click anywhere
+  useEffect(() => {
+    const handleClick = () => setContextMenu(null);
+    if (contextMenu) {
+      document.addEventListener("click", handleClick);
+      return () => document.removeEventListener("click", handleClick);
+    }
+  }, [contextMenu]);
 
   // Get current channel name
   const currentChannelName = allChannels.find(c => c.id === channelId)?.name || channelId;
@@ -327,7 +346,14 @@ export default function Chat({ channelId }: ChatProps) {
             const avatarUrl = profile?.photoURL || msg.senderAvatar;
 
             return (
-              <div key={msg.id} className={`flex gap-4 ${isMe ? "flex-row-reverse" : ""}`}>
+              <div
+                key={msg.id}
+                className={`flex gap-4 ${isMe ? "flex-row-reverse" : ""}`}
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  setContextMenu({ x: e.clientX, y: e.clientY, messageId: msg.id });
+                }}
+              >
                 <div className="w-9 h-9 rounded-md bg-gray-600 flex-shrink-0 flex items-center justify-center text-white text-xs overflow-hidden border border-gray-700 relative">
                   {avatarUrl ? (
                     <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" />
@@ -372,6 +398,22 @@ export default function Chat({ channelId }: ChatProps) {
           })}
           <div ref={messagesEndRef} />
         </div>
+
+        {/* Message Context Menu */}
+        {contextMenu && (
+          <div
+            className="fixed bg-[#1e2f4d] border border-gray-700 rounded-md shadow-lg py-1 z-50"
+            style={{ left: contextMenu.x, top: contextMenu.y }}
+          >
+            <button
+              onClick={() => handleDeleteMessage(contextMenu.messageId)}
+              className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-red-600 hover:text-white transition-colors"
+            >
+              投稿を削除
+            </button>
+          </div>
+        )}
+
         {/* ブラッシュアップ提案パネル */}
         <div className="px-6">
           {showBrushUp && (
