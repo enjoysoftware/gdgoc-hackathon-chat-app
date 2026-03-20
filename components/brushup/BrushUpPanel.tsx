@@ -10,7 +10,7 @@ interface BrushUpPanelProps {
   error: string | null;
   onClose: () => void;
   onSuggestionClick: (suggestion: BrushUpSuggestion) => void;
-  onDetailClick: () => void;
+  onDetailClick: () => void | Promise<void>;
 }
 
 export default function BrushUpPanel({

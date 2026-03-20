@@ -1,14 +1,19 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 export async function POST(request: Request) {
-  const apiKey = process.env.GEMINI_API_KEY;
-  console.log('Request received at /api/generate-timeline-graph');
+  console.log('Request received at /api/gemini-response');
+  const { prompt, mode } = await request.json();
+  const isDetailReview = mode === 'detail_review';
+  const apiKey = isDetailReview
+    ? process.env.GEMINI_REVIEW_API_KEY
+    : process.env.GEMINI_API_KEY;
+
   if (!apiKey) {
-    console.error('GEMINI_API_KEY is not set');
-    return new Response('GEMINI_API_KEY is not set', { status: 500 });
+    const missingKeyName = isDetailReview ? 'GEMINI_REVIEW_API_KEY' : 'GEMINI_API_KEY';
+    console.error(`${missingKeyName} is not set`);
+    return new Response(`${missingKeyName} is not set`, { status: 500 });
   }
 
-  const { prompt } = await request.json();
   console.log('Prompt:', prompt);
   if (!prompt || typeof prompt !== 'string') {
     return new Response('Invalid request: prompt is required', { status: 400 });
