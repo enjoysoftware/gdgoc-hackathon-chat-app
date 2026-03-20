@@ -54,7 +54,7 @@ export default function Chat({ channelId }: ChatProps) {
   const [newMessage, setNewMessage] = useState("");
 
   // BrushUp panel state
-  const { analysis, isAnalyzing, error, analyzeDraft, reset } = useBrushUp();
+  const { analysis, isAnalyzing, error, analyzeDraft, analyzeDetailedReview, reset } = useBrushUp();
   const [showBrushUp, setShowBrushUp] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
 
@@ -76,6 +76,13 @@ export default function Chat({ channelId }: ChatProps) {
   const handleAfterSend = () => {
     setShowBrushUp(false);
     reset();
+  };
+
+  const handleOpenDetailModal = async () => {
+    const succeeded = await analyzeDetailedReview(newMessage);
+    if (succeeded) {
+      setShowDetailModal(true);
+    }
   };
 
   //以下はグラフ表示用
@@ -299,7 +306,7 @@ export default function Chat({ channelId }: ChatProps) {
               error={error}
               onClose={handleCloseBrushUp}
               onSuggestionClick={handleSuggestionClick}
-              onDetailClick={() => setShowDetailModal(true)}
+              onDetailClick={handleOpenDetailModal}
             />
           )}
         </div>

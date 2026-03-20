@@ -78,14 +78,14 @@ export default function MessageInput({
 //グラフ表示機能の呼び出し,どちらを使うかは要相談
 //コメントアウトする方で機能が変わります
 //----------↓↓文章分析の実装-----------
-              // onClick={onAnalyze}
-              // disabled={!user || !value.trim() || isAnalyzing}
-              // className="bg-amber-600 hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-3 py-1 rounded text-xs font-bold flex items-center gap-1.5 transition-colors"
+              onClick={onAnalyze}
+              disabled={!user || !value.trim() || isAnalyzing}
+              className="bg-amber-600 hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-3 py-1 rounded text-xs font-bold flex items-center gap-1.5 transition-colors"
 
 //----------↓グラフ表示の実装-----------
-              onClick={() => onAnalyzeQuestion?.(value)}
-              disabled={!value.trim()}
-              className="bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed text-white px-3 py-1 rounded text-xs font-bold flex items-center gap-1.5 transition-colors"
+              // onClick={() => onAnalyzeQuestion?.(value)}
+              // disabled={!value.trim()}
+              // className="bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed text-white px-3 py-1 rounded text-xs font-bold flex items-center gap-1.5 transition-colors"
 //-----------------
             >
               <Sparkles size={14} /> 質問を分析
