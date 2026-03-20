@@ -3,14 +3,25 @@
 import { useEffect, useState } from "react";
 import { auth, db } from "@/lib/firebase";
 import { onAuthStateChanged, User, GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
-import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
+import { doc, setDoc, getDoc, onSnapshot, serverTimestamp } from "firebase/firestore";
+
+interface UserProfile {
+  uid: string;
+  displayName: string;
+  photoURL: string;
+  email: string | null;
+  status: "online" | "offline";
+}
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (authUser) => {
+    let unsubscribeProfile: (() => void) | null = null;
+
+    const unsubscribeAuth = onAuthStateChanged(auth, async (authUser) => {
       if (authUser) {
         // Create or update user profile in Firestore
         const userRef = doc(db, "users", authUser.uid);
@@ -29,14 +40,50 @@ export function useAuth() {
           await setDoc(userRef, { status: "online", updatedAt: serverTimestamp() }, { merge: true });
         }
         setUser(authUser);
+
+        // Listen to profile changes
+        unsubscribeProfile = onSnapshot(userRef, (snapshot) => {
+          if (snapshot.exists()) {
+            setProfile(snapshot.data() as UserProfile);
+          }
+        });
       } else {
         setUser(null);
+        setProfile(null);
+        if (unsubscribeProfile) unsubscribeProfile();
       }
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribeAuth();
+      if (unsubscribeProfile) unsubscribeProfile();
+    };
   }, []);
+
+  const updateStatus = async (status: "online" | "offline") => {
+    const currentUser = auth.currentUser || user;
+    if (currentUser) {
+      const userRef = doc(db, "users", currentUser.uid);
+      await setDoc(userRef, { status, updatedAt: serverTimestamp() }, { merge: true });
+    }
+  };
+
+  // Visibility change logic
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        updateStatus("offline");
+      } else {
+        updateStatus("online");
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [user]);
 
   const loginWithGoogle = async () => {
     const provider = new GoogleAuthProvider();
@@ -55,5 +102,5 @@ export function useAuth() {
     await signOut(auth);
   };
 
-  return { user, loading, loginWithGoogle, logout };
+  return { user, profile, loading, loginWithGoogle, logout, updateStatus };
 }

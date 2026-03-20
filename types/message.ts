@@ -12,4 +12,5 @@ export interface Message {
 export interface UserProfile {
   displayName: string;
   photoURL: string;
+  status?: "online" | "offline";
 }

@@ -80,6 +80,7 @@ export default function Chat({ channelId }: ChatProps) {
             [uid]: {
               displayName: data.displayName || "Anonymous",
               photoURL: data.photoURL || "",
+              status: data.status,
             },
           }));
         }
@@ -185,12 +186,17 @@ export default function Chat({ channelId }: ChatProps) {
 
             return (
               <div key={msg.id} className={`flex gap-4 ${isMe ? "flex-row-reverse" : ""}`}>
-                <div className="w-9 h-9 rounded-md bg-gray-600 flex-shrink-0 flex items-center justify-center text-white text-xs overflow-hidden border border-gray-700">
+                <div className="w-9 h-9 rounded-md bg-gray-600 flex-shrink-0 flex items-center justify-center text-white text-xs overflow-hidden border border-gray-700 relative">
                   {avatarUrl ? (
                     <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" />
                   ) : (
                     displayName.charAt(0)
                   )}
+                  <div
+                    className={`absolute bottom-0.5 right-0.5 w-2.5 h-2.5 rounded-full border border-black/20 ${
+                      profile?.status === "online" ? "bg-green-500" : "bg-gray-500"
+                    }`}
+                  />
                 </div>
                 <div className={`flex flex-col ${isMe ? "items-end" : ""}`}>
                   <div className="flex items-baseline gap-2 mb-1">
