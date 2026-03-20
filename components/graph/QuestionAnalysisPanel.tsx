@@ -72,7 +72,7 @@ export default function QuestionAnalysisPanel({
     const prompt = buildSvgPrompt(messages, mention, draftMessage);
 
     try {
-      const response = await fetch('/api/generate-timeline-graph', {
+      const response = await fetch('/api/gemini-response', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt }),

@@ -58,7 +58,7 @@ export default function TimelineGraphGenerator({
     const prompt = buildSvgPrompt(timeline, problemId);
 
     try {
-      const response = await fetch('/api/generate-timeline-graph', {
+      const response = await fetch('/api/gemini-response', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt }),
