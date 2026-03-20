@@ -20,10 +20,6 @@ import { GraphAnalysisResponse } from "@/types/graph";
 import { parseMessageWithMentions, MessagePart, MentionPart } from "@/lib/utils/mentions";
 import ProblemTag from "./ui/ProblemTag";
 import GraphPanel from "./graph/GraphPanel";
-import { useBrushUp } from "@/hooks/useBrushUp";
-import BrushUpPanel from "./brushup/BrushUpPanel";
-import BrushUpDetailModal from "./brushup/BrushUpDetailModal";
-import { BrushUpSuggestion } from "@/types/brushup";
 
 interface ChatProps {
   channelId: string;
@@ -45,34 +41,6 @@ export default function Chat({ channelId }: ChatProps) {
   const [graphPanelOpen, setGraphPanelOpen] = useState(false);
   const [graphData, setGraphData] = useState<GraphAnalysisResponse | null>(null);
   const [loadingGraph, setLoadingGraph] = useState(false);
-
-  // Message input state
-  const [newMessage, setNewMessage] = useState("");
-
-  // BrushUp panel state
-  const { analysis, isAnalyzing, error, analyzeDraft, reset } = useBrushUp();
-  const [showBrushUp, setShowBrushUp] = useState(false);
-  const [showDetailModal, setShowDetailModal] = useState(false);
-
-  const handleAnalyze = () => {
-    if (!newMessage.trim()) return;
-    setShowBrushUp(true);
-    analyzeDraft(newMessage);
-  };
-
-  const handleCloseBrushUp = () => {
-    setShowBrushUp(false);
-    reset();
-  };
-
-  const handleSuggestionClick = (suggestion: BrushUpSuggestion) => {
-    setNewMessage((prev) => prev + `\n【${suggestion.category}】`);
-  };
-
-  const handleAfterSend = () => {
-    setShowBrushUp(false);
-    reset();
-  };
 
   // Get current channel name
   const currentChannelName = CHANNELS.find(c => c.id === channelId)?.name || channelId;
@@ -257,42 +225,8 @@ export default function Chat({ channelId }: ChatProps) {
           <div ref={messagesEndRef} />
         </div>
 
-        {/* BrushUp Panel */}
-        <div className="px-6">
-          {showBrushUp && (
-            <BrushUpPanel
-              analysis={analysis}
-              isAnalyzing={isAnalyzing}
-              error={error}
-              onClose={handleCloseBrushUp}
-              onSuggestionClick={handleSuggestionClick}
-              onDetailClick={() => setShowDetailModal(true)}
-            />
-          )}
-        </div>
-
-        <MessageInput
-          channelId={channelId}
-          value={newMessage}
-          onChange={setNewMessage}
-          onAnalyze={handleAnalyze}
-          isAnalyzing={isAnalyzing}
-          onAfterSend={handleAfterSend}
-        />
+        <MessageInput channelId={channelId} />
       </div>
-
-      {/* BrushUp Detail Modal */}
-      {showDetailModal && analysis && (
-        <BrushUpDetailModal
-          analysis={analysis}
-          draftText={newMessage}
-          onClose={() => setShowDetailModal(false)}
-          onSuggestionClick={(suggestion) => {
-            handleSuggestionClick(suggestion);
-            setShowDetailModal(false);
-          }}
-        />
-      )}
 
       {/* Graph Panel */}
       {graphData && (
