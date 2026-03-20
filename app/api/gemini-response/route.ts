@@ -2,16 +2,12 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 
 export async function POST(request: Request) {
   console.log('Request received at /api/gemini-response');
-  const { prompt, mode } = await request.json();
-  const isDetailReview = mode === 'detail_review';
-  const apiKey = isDetailReview
-    ? process.env.GEMINI_REVIEW_API_KEY
-    : process.env.GEMINI_API_KEY;
+  const { prompt } = await request.json();
+  const apiKey = process.env.GEMINI_API_KEY;
 
   if (!apiKey) {
-    const missingKeyName = isDetailReview ? 'GEMINI_REVIEW_API_KEY' : 'GEMINI_API_KEY';
-    console.error(`${missingKeyName} is not set`);
-    return new Response(`${missingKeyName} is not set`, { status: 500 });
+    console.error('GEMINI_API_KEY is not set');
+    return new Response('GEMINI_API_KEY is not set', { status: 500 });
   }
 
   console.log('Prompt:', prompt);

@@ -118,7 +118,6 @@ export function useBrushUp() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           prompt: buildDetailedReviewPrompt(draftText),
-          mode: "detail_review",
         }),
       });
 
