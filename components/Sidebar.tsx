@@ -1,7 +1,8 @@
 "use client";
 
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Hash, Settings, LogOut } from "lucide-react";
+import { Hash, Settings, LogOut, Check } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
 interface Channel {
@@ -14,9 +15,35 @@ interface SidebarProps {
   channels: Channel[];
 }
 
+type UserStatus = "online" | "offline";
+
 export default function Sidebar({ channelId, channels }: SidebarProps) {
   const router = useRouter();
-  const { user, logout, loginWithGoogle } = useAuth();
+  const { user, profile, logout, loginWithGoogle, updateStatus } = useAuth();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  const status = profile?.status || "online";
+
+  const handleStatusChange = async (newStatus: UserStatus) => {
+    setIsMenuOpen(false);
+    try {
+      await updateStatus(newStatus);
+    } catch (error) {
+      console.error("Failed to update status:", error);
+    }
+  };
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   return (
     <div className="w-64 bg-[#111d33] border-r border-gray-800 flex flex-col">
@@ -66,9 +93,9 @@ export default function Sidebar({ channelId, channels }: SidebarProps) {
       {/* User Status or Login Button */}
       <div className="p-4 bg-[#0e172a] border-t border-gray-800 flex flex-col gap-3">
         {user ? (
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between relative">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center overflow-hidden border border-gray-700">
+              <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center overflow-hidden border border-gray-700 relative">
                 {user.photoURL ? (
                   <img src={user.photoURL} alt={user.displayName || "User"} className="w-full h-full object-cover" />
                 ) : (
@@ -76,19 +103,58 @@ export default function Sidebar({ channelId, channels }: SidebarProps) {
                     {user.displayName?.charAt(0) || "U"}
                   </span>
                 )}
+                <div
+                  className={`absolute bottom-1 right-1 w-2 h-2 rounded-full border border-black/20 ${
+                    status === "online" ? "bg-green-500" : "bg-gray-500"
+                  }`}
+                />
               </div>
               <div>
                 <p className="text-xs font-bold text-white truncate w-24">
                   {user.displayName}
                 </p>
-                <p className="text-[10px] text-green-500 flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
-                  オンライン
+                <p className={`text-[10px] flex items-center gap-1 ${status === "online" ? "text-green-500" : "text-gray-500"}`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${status === "online" ? "bg-green-500" : "bg-gray-500"}`}></span>
+                  {status === "online" ? "オンライン" : "オフライン"}
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Settings size={14} className="text-gray-500 cursor-pointer hover:text-white" />
+              <div className="relative" ref={menuRef}>
+                <Settings
+                  size={14}
+                  className="text-gray-500 cursor-pointer hover:text-white"
+                  onClick={() => setIsMenuOpen(!isMenuOpen)}
+                />
+                
+                {isMenuOpen && (
+                  <div className="absolute bottom-full right-0 mb-2 w-48 bg-[#1e2f4d] border border-gray-700 rounded-md shadow-lg py-1 z-50">
+                    <div className="px-3 py-2 border-b border-gray-700">
+                      <p className="text-[10px] font-bold text-gray-400 uppercase">ステータス設定</p>
+                    </div>
+                    <button
+                      onClick={() => handleStatusChange("online")}
+                      className="w-full flex items-center justify-between px-3 py-2 text-sm text-gray-200 hover:bg-blue-600 transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                        <span>オンライン</span>
+                      </div>
+                      {status === "online" && <Check size={12} />}
+                    </button>
+                    <button
+                      onClick={() => handleStatusChange("offline")}
+                      className="w-full flex items-center justify-between px-3 py-2 text-sm text-gray-200 hover:bg-blue-600 transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-gray-500"></span>
+                        <span>オフライン</span>
+                      </div>
+                      {status === "offline" && <Check size={12} />}
+                    </button>
+                  </div>
+                )}
+              </div>
               <button onClick={logout} title="ログアウト">
                 <LogOut size={14} className="text-gray-500 cursor-pointer hover:text-red-400 transition-colors" />
               </button>
