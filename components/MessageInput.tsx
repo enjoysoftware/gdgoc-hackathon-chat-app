@@ -8,9 +8,10 @@ import { useAuth } from "@/hooks/useAuth";
 
 interface MessageInputProps {
   channelId: string;
+  onAnalyzeQuestion?: (draftMessage: string) => void;
 }
 
-export default function MessageInput({ channelId }: MessageInputProps) {
+export default function MessageInput({ channelId, onAnalyzeQuestion }: MessageInputProps) {
   const [newMessage, setNewMessage] = useState("");
   const { user } = useAuth();
 
@@ -58,7 +59,9 @@ export default function MessageInput({ channelId }: MessageInputProps) {
             <div className="h-4 w-[1px] bg-gray-700 mx-1"></div>
             <button
               type="button"
-              className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs font-bold flex items-center gap-1.5 transition-colors"
+              onClick={() => onAnalyzeQuestion?.(newMessage)}
+              disabled={!newMessage.trim()}
+              className="bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed text-white px-3 py-1 rounded text-xs font-bold flex items-center gap-1.5 transition-colors"
             >
               <Plus size={14} /> 質問を分析
             </button>

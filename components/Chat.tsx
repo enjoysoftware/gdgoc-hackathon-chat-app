@@ -20,6 +20,7 @@ import { GraphAnalysisResponse } from "@/types/graph";
 import { parseMessageWithMentions, MessagePart, MentionPart } from "@/lib/utils/mentions";
 import ProblemTag from "./ui/ProblemTag";
 import GraphPanel from "./graph/GraphPanel";
+import QuestionAnalysisPanel from "./graph/QuestionAnalysisPanel";
 
 interface ChatProps {
   channelId: string;
@@ -41,6 +42,12 @@ export default function Chat({ channelId }: ChatProps) {
   const [graphPanelOpen, setGraphPanelOpen] = useState(false);
   const [graphData, setGraphData] = useState<GraphAnalysisResponse | null>(null);
   const [loadingGraph, setLoadingGraph] = useState(false);
+
+  // Question analysis panel state
+  const [analysisPanelOpen, setAnalysisPanelOpen] = useState(false);
+  const [analysisMention, setAnalysisMention] = useState('');
+  const [analysisMessages, setAnalysisMessages] = useState<Message[]>([]);
+  const [analysisDraft, setAnalysisDraft] = useState('');
 
   // Get current channel name
   const currentChannelName = CHANNELS.find(c => c.id === channelId)?.name || channelId;
@@ -140,6 +147,23 @@ export default function Chat({ channelId }: ChatProps) {
     }
   };
 
+  // Handle "質問を分析" button from MessageInput
+  const handleAnalyzeQuestion = (draftMessage: string) => {
+    const match = draftMessage.match(/@(\w+)/i);
+    if (!match) {
+      alert('メッセージに @○○ の指定がありません');
+      return;
+    }
+    const mention = match[1].toLowerCase();
+    const filtered = messages.filter(m =>
+      m.text.toLowerCase().includes(`@${mention}`)
+    );
+    setAnalysisMention(mention);
+    setAnalysisMessages(filtered);
+    setAnalysisDraft(draftMessage);
+    setAnalysisPanelOpen(true);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen bg-[#0b1426] text-white">
@@ -225,7 +249,7 @@ export default function Chat({ channelId }: ChatProps) {
           <div ref={messagesEndRef} />
         </div>
 
-        <MessageInput channelId={channelId} />
+        <MessageInput channelId={channelId} onAnalyzeQuestion={handleAnalyzeQuestion} />
       </div>
 
       {/* Graph Panel */}
@@ -237,6 +261,15 @@ export default function Chat({ channelId }: ChatProps) {
           channelId={channelId}
         />
       )}
+
+      {/* Question Analysis Panel */}
+      <QuestionAnalysisPanel
+        isOpen={analysisPanelOpen}
+        onClose={() => setAnalysisPanelOpen(false)}
+        messages={analysisMessages}
+        mention={analysisMention}
+        draftMessage={analysisDraft}
+      />
 
       {/* Loading overlay */}
       {loadingGraph && (
