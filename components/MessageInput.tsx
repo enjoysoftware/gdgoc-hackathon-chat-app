@@ -43,7 +43,7 @@ export default function MessageInput({ channelId }: MessageInputProps) {
             placeholder={user ? `${channelId} にメッセージを送信...` : "ログインしてチャットに参加..."}
             className={`w-full bg-transparent outline-none resize-none text-sm text-gray-200 min-h-[60px] ${!user ? "cursor-not-allowed opacity-50" : ""}`}
             onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey && user) {
+              if (e.key === "Enter" && !e.shiftKey && user && !e.nativeEvent.isComposing ) {
                 e.preventDefault();
                 handleSendMessage(e);
               }
