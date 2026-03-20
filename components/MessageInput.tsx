@@ -4,14 +4,16 @@ import { db } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { Send, Smile, Plus, AtSign, Sparkles } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-
+import { useState } from "react";
 interface MessageInputProps {
   channelId: string;
+
   value: string;
   onChange: (value: string) => void;
   onAnalyze: () => void;
   isAnalyzing: boolean;
   onAfterSend?: () => void;
+  onAnalyzeQuestion?: (draftMessage: string) => void;
 }
 
 export default function MessageInput({
@@ -21,7 +23,11 @@ export default function MessageInput({
   onAnalyze,
   isAnalyzing,
   onAfterSend,
+  onAnalyzeQuestion
 }: MessageInputProps) {
+
+
+  const [newMessage, setNewMessage] = useState("");
   const { user } = useAuth();
 
   const handleSendMessage = async (e: React.FormEvent) => {
@@ -69,9 +75,18 @@ export default function MessageInput({
             <div className="h-4 w-[1px] bg-gray-700 mx-1"></div>
             <button
               type="button"
-              onClick={onAnalyze}
-              disabled={!user || !value.trim() || isAnalyzing}
-              className="bg-amber-600 hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-3 py-1 rounded text-xs font-bold flex items-center gap-1.5 transition-colors"
+//グラフ表示機能の呼び出し,どちらを使うかは要相談
+//コメントアウトする方で機能が変わります
+//----------↓↓文章分析の実装-----------
+              // onClick={onAnalyze}
+              // disabled={!user || !value.trim() || isAnalyzing}
+              // className="bg-amber-600 hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-3 py-1 rounded text-xs font-bold flex items-center gap-1.5 transition-colors"
+
+//----------↓グラフ表示の実装-----------
+              onClick={() => onAnalyzeQuestion?.(value)}
+              disabled={!value.trim()}
+              className="bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed text-white px-3 py-1 rounded text-xs font-bold flex items-center gap-1.5 transition-colors"
+//-----------------
             >
               <Sparkles size={14} /> 質問を分析
             </button>
