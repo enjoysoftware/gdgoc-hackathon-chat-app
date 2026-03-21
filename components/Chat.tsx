@@ -203,9 +203,9 @@ export default function Chat({ channelId }: ChatProps) {
     setLoadingGraph(true);
 
     try {
-      // Filter messages containing @problemX
+      // Filter messages containing #problemX
       const problemMessages = messages.filter(msg =>
-        msg.text.toLowerCase().includes(`@${problemId.toLowerCase()}`)
+        msg.text.toLowerCase().includes(`#${problemId.toLowerCase()}`)
       );
 
       if (problemMessages.length === 0) {
@@ -245,14 +245,14 @@ export default function Chat({ channelId }: ChatProps) {
 
   // Handle "質問を分析" button from MessageInput
   const handleAnalyzeQuestion = (draftMessage: string) => {
-    const match = draftMessage.match(/@(\w+)/i);
+    const match = draftMessage.match(/#(\w+)/i);
     if (!match) {
-      alert('メッセージに @○○ の指定がありません');
+      alert('メッセージに #○○ の指定がありません');
       return;
     }
     const mention = match[1].toLowerCase();
     const filtered = messages.filter(m =>
-      m.text.toLowerCase().includes(`@${mention}`)
+      m.text.toLowerCase().includes(`#${mention}`)
     );
     setAnalysisMention(mention);
     setAnalysisMessages(filtered);
