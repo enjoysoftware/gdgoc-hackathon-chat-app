@@ -72,18 +72,25 @@ export default function Chat({ channelId }: ChatProps) {
 
     // ブラッシュアップ（文章分析）を常に実行
     setShowBrushUp(true);
-    analyzeDraft(text);
+    const cleanText = text.replace(/#\w+/gi, '').trim();
+    analyzeDraft(cleanText);
 
     // グラフ表示（#メンションがある場合のみ）
     const match = text.match(/#(\w+)/i);
     if (match) {
       const mention = match[1].toLowerCase();
-      const filtered = messages.filter(m =>
-        m.text.toLowerCase().includes(`#${mention}`)
-      );
+      const mentionRegex = new RegExp(`#${mention}`, 'gi');
+
+      const filtered = messages
+        .filter(m => m.text.toLowerCase().includes(`#${mention}`))
+        .map(m => ({
+          ...m,
+          text: m.text.replace(mentionRegex, '').trim()
+        }));
+
       setAnalysisMention(mention);
       setAnalysisMessages(filtered);
-      setAnalysisDraft(text);
+      setAnalysisDraft(text.replace(mentionRegex, '').trim());
       setAnalysisPanelOpen(true);
     }
   };
