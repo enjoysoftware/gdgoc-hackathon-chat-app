@@ -13,15 +13,18 @@ interface Channel {
 interface SidebarProps {
   channelId: string;
   channels: Channel[];
+  onAddChannel?: (name: string) => void;
 }
 
 type UserStatus = "online" | "offline";
 
-export default function Sidebar({ channelId, channels }: SidebarProps) {
+export default function Sidebar({ channelId, channels, onAddChannel }: SidebarProps) {
   const router = useRouter();
   const { user, profile, logout, loginWithGoogle, updateStatus } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const [showAddChannel, setShowAddChannel] = useState(false);
+  const [newChannelName, setNewChannelName] = useState("");
 
   const status = profile?.status || "online";
 
@@ -61,6 +64,12 @@ export default function Sidebar({ channelId, channels }: SidebarProps) {
 
       <div className="flex-1 overflow-y-auto py-4">
         <div className="px-4 mb-6">
+          <button
+            onClick={() => setShowAddChannel(true)}
+            className="text-[10px] text-blue-400 hover:text-blue-300 cursor-pointer mb-2 font-bold transition-colors"
+          >
+            + チャンネルを追加
+          </button>
           <h3 className="text-[10px] uppercase font-bold text-gray-500 mb-2">チャンネル</h3>
           <ul className="space-y-1">
             {channels.map((ch) => (
@@ -89,6 +98,53 @@ export default function Sidebar({ channelId, channels }: SidebarProps) {
           </ul>
         </div>
       </div>
+
+      {/* Add Channel Modal */}
+      {showAddChannel && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-[#1e2f4d] border border-gray-700 rounded-lg p-6 w-80 shadow-xl">
+            <h3 className="text-white font-bold text-sm mb-4">チャンネルを追加</h3>
+            <input
+              type="text"
+              value={newChannelName}
+              onChange={(e) => setNewChannelName(e.target.value)}
+              placeholder="チャンネル名を入力"
+              className="w-full bg-[#0b1426] text-white text-sm rounded-md py-2 px-3 outline-none border border-gray-600 focus:border-blue-500 mb-4"
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && newChannelName.trim()) {
+                  onAddChannel?.(newChannelName.trim());
+                  setNewChannelName("");
+                  setShowAddChannel(false);
+                }
+              }}
+            />
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => {
+                  setNewChannelName("");
+                  setShowAddChannel(false);
+                }}
+                className="px-3 py-1.5 text-sm text-gray-400 hover:text-white transition-colors"
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={() => {
+                  if (newChannelName.trim()) {
+                    onAddChannel?.(newChannelName.trim());
+                    setNewChannelName("");
+                    setShowAddChannel(false);
+                  }
+                }}
+                className="px-3 py-1.5 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
+              >
+                チャンネルを追加
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* User Status or Login Button */}
       <div className="p-4 bg-[#0e172a] border-t border-gray-800 flex flex-col gap-3">

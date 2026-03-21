@@ -9,8 +9,10 @@ import {
   limit,
   onSnapshot,
   doc,
+  setDoc,
+  deleteDoc,
 } from "firebase/firestore";
-import { Hash, Search, Bell, Info } from "lucide-react";
+import { Hash, Search, Bell, Info, Users, X } from "lucide-react";
 import Sidebar from "./Sidebar";
 import MessageInput from "./MessageInput";
 import { useAuth } from "@/hooks/useAuth";
@@ -49,6 +51,13 @@ export default function Chat({ channelId }: ChatProps) {
   const [graphPanelOpen, setGraphPanelOpen] = useState(false);
   const [graphData, setGraphData] = useState<GraphAnalysisResponse | null>(null);
   const [loadingGraph, setLoadingGraph] = useState(false);
+
+  // Dynamic channels state
+  const [dynamicChannels, setDynamicChannels] = useState<{ id: string; name: string }[]>([]);
+  const [showMemberList, setShowMemberList] = useState(false);
+
+  // Context menu state for message deletion
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; messageId: string } | null>(null);
 
   // Message input state
   const [newMessage, setNewMessage] = useState("");
@@ -92,8 +101,51 @@ export default function Chat({ channelId }: ChatProps) {
   const [analysisMessages, setAnalysisMessages] = useState<Message[]>([]);
   const [analysisDraft, setAnalysisDraft] = useState('');
 
+  // Listen to dynamic channels from Firestore
+  useEffect(() => {
+    const unsubscribe = onSnapshot(collection(db, "channelList"), (snapshot) => {
+      const fetched = snapshot.docs.map((d) => ({
+        id: d.id,
+        name: (d.data().name as string) || d.id,
+      }));
+      setDynamicChannels(fetched);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // Add channel handler
+  const handleAddChannel = async (name: string) => {
+    const ascii = name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+    const channelId = ascii || `channel-${Date.now()}`;
+    await setDoc(doc(db, "channelList", channelId), {
+      name,
+      createdAt: new Date(),
+    });
+  };
+
+  // Merge static and dynamic channels
+  const allChannels = [
+    ...CHANNELS,
+    ...dynamicChannels.filter((dc) => !CHANNELS.some((c) => c.id === dc.id)),
+  ];
+
+  // Delete message handler
+  const handleDeleteMessage = async (messageId: string) => {
+    await deleteDoc(doc(db, "channels", channelId, "messages", messageId));
+    setContextMenu(null);
+  };
+
+  // Close context menu on click anywhere
+  useEffect(() => {
+    const handleClick = () => setContextMenu(null);
+    if (contextMenu) {
+      document.addEventListener("click", handleClick);
+      return () => document.removeEventListener("click", handleClick);
+    }
+  }, [contextMenu]);
+
   // Get current channel name
-  const currentChannelName = CHANNELS.find(c => c.id === channelId)?.name || channelId;
+  const currentChannelName = allChannels.find(c => c.id === channelId)?.name || channelId;
 
   // Listen to messages
   useEffect(() => {
@@ -218,7 +270,7 @@ export default function Chat({ channelId }: ChatProps) {
 
   return (
     <div className="flex h-screen bg-[#0b1426] text-gray-300 font-sans overflow-hidden">
-      <Sidebar channelId={channelId} channels={CHANNELS} />
+      <Sidebar channelId={channelId} channels={allChannels} onAddChannel={handleAddChannel} />
 
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col">
@@ -227,7 +279,13 @@ export default function Chat({ channelId }: ChatProps) {
           <div className="flex items-center gap-2">
             <Hash size={18} className="text-gray-400" />
             <h1 className="font-bold text-white">{currentChannelName}</h1>
-            <span className="text-xs text-gray-500 ml-2">12 members</span>
+            <button
+              onClick={() => setShowMemberList(!showMemberList)}
+              className="text-xs text-gray-500 ml-2 hover:text-blue-400 cursor-pointer flex items-center gap-1 transition-colors"
+            >
+              <Users size={12} />
+              {Object.keys(userProfiles).length || 0} members
+            </button>
           </div>
           <div className="flex items-center gap-4">
             <div className="relative">
@@ -243,6 +301,42 @@ export default function Chat({ channelId }: ChatProps) {
           </div>
         </header>
 
+        {/* Member List Panel */}
+        {showMemberList && (
+          <div className="border-b border-gray-800 bg-[#111d33] px-6 py-3">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-bold text-white">メンバー一覧 ({Object.keys(userProfiles).length})</h3>
+              <button onClick={() => setShowMemberList(false)} className="text-gray-500 hover:text-white transition-colors">
+                <X size={14} />
+              </button>
+            </div>
+            <div className="space-y-2 max-h-48 overflow-y-auto">
+              {Object.entries(userProfiles).map(([uid, p]) => (
+                <div key={uid} className="flex items-center gap-3 px-2 py-1.5 rounded hover:bg-[#1e2f4d] transition-colors">
+                  <div className="w-7 h-7 rounded-full bg-gray-600 flex-shrink-0 flex items-center justify-center text-white text-xs overflow-hidden border border-gray-700 relative">
+                    {p.photoURL ? (
+                      <img src={p.photoURL} alt={p.displayName} className="w-full h-full object-cover" />
+                    ) : (
+                      p.displayName.charAt(0)
+                    )}
+                    <div
+                      className={`absolute bottom-0 right-0 w-2 h-2 rounded-full border border-black/20 ${
+                        p.status === "online" ? "bg-green-500" : "bg-gray-500"
+                      }`}
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-white">{p.displayName}</span>
+                    <span className={`text-[10px] ${p.status === "online" ? "text-green-500" : "text-gray-500"}`}>
+                      {p.status === "online" ? "オンライン" : "オフライン"}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Message List */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
           {messages.map((msg) => {
@@ -252,7 +346,14 @@ export default function Chat({ channelId }: ChatProps) {
             const avatarUrl = profile?.photoURL || msg.senderAvatar;
 
             return (
-              <div key={msg.id} className={`flex gap-4 ${isMe ? "flex-row-reverse" : ""}`}>
+              <div
+                key={msg.id}
+                className={`flex gap-4 ${isMe ? "flex-row-reverse" : ""}`}
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  setContextMenu({ x: e.clientX, y: e.clientY, messageId: msg.id });
+                }}
+              >
                 <div className="w-9 h-9 rounded-md bg-gray-600 flex-shrink-0 flex items-center justify-center text-white text-xs overflow-hidden border border-gray-700 relative">
                   {avatarUrl ? (
                     <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" />
@@ -297,6 +398,22 @@ export default function Chat({ channelId }: ChatProps) {
           })}
           <div ref={messagesEndRef} />
         </div>
+
+        {/* Message Context Menu */}
+        {contextMenu && (
+          <div
+            className="fixed bg-[#1e2f4d] border border-gray-700 rounded-md shadow-lg py-1 z-50"
+            style={{ left: contextMenu.x, top: contextMenu.y }}
+          >
+            <button
+              onClick={() => handleDeleteMessage(contextMenu.messageId)}
+              className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-red-600 hover:text-white transition-colors"
+            >
+              投稿を削除
+            </button>
+          </div>
+        )}
+
         {/* ブラッシュアップ提案パネル */}
         <div className="px-6">
           {showBrushUp && (
