@@ -27,7 +27,7 @@ function buildSvgPrompt(messages: Message[], mention: string, draftMessage: stri
   return `あなたはSVGグラフ生成の専門家です。
 以下の時系列データを元に、時系列グラフをSVG形式で生成してください。
 
-質問ID: @${mention}
+質問ID: #${mention}
 
 時系列データ:
 ${entries.join('\n')}
@@ -43,7 +43,7 @@ ${entries.join('\n')}
 - 各イベントの短いラベルを表示（15文字以内に切り詰め）
 - 通常イベントの色: イベント円は #3b82f6、線は #4b5563、テキストは #e5e7eb
 - 「下書き」の最後のイベントは #f59e0b（オレンジ）で強調表示
-- タイトルとして "@${mention} の時系列グラフ" を上部に表示
+- タイトルとして "#${mention} の時系列グラフ" を上部に表示
 - フォント: font-family="sans-serif"
 - SVGタグから始め、</svg>で終わること`;
 }
@@ -119,7 +119,7 @@ export default function QuestionAnalysisPanel({
       <div className="h-14 border-b border-gray-800 flex items-center justify-between px-4 flex-shrink-0">
         <div className="flex items-center gap-2">
           <BarChart2 size={18} className="text-blue-400" />
-          <h2 className="text-white font-bold">質問分析: @{mention}</h2>
+          <h2 className="text-white font-bold">質問分析: #{mention}</h2>
         </div>
         <div className="flex items-center gap-2">
           <button
