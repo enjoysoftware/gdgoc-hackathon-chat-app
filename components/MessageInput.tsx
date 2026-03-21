@@ -10,10 +10,9 @@ interface MessageInputProps {
 
   value: string;
   onChange: (value: string) => void;
-  onAnalyze: () => void;
+  onAnalyze: (message: string, mode: 'brushup' | 'graph') => void;
   isAnalyzing: boolean;
   onAfterSend?: () => void;
-  onAnalyzeQuestion?: (draftMessage: string) => void;
 }
 
 export default function MessageInput({
@@ -23,7 +22,6 @@ export default function MessageInput({
   onAnalyze,
   isAnalyzing,
   onAfterSend,
-  onAnalyzeQuestion
 }: MessageInputProps) {
 
 
@@ -75,16 +73,14 @@ export default function MessageInput({
             <div className="h-4 w-[1px] bg-gray-700 mx-1"></div>
             <button
               type="button"
-//グラフ表示機能の呼び出し,どちらを使うかは要相談
-//コメントアウトする方で機能が変わります
 //----------↓↓文章分析の実装-----------
-              onClick={onAnalyze}
+              onClick={() => onAnalyze(value, 'graph')}
               disabled={!user || !value.trim() || isAnalyzing}
               className="bg-amber-600 hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-3 py-1 rounded text-xs font-bold flex items-center gap-1.5 transition-colors"
 
 //----------↓グラフ表示の実装-----------
-              // onClick={() => onAnalyzeQuestion?.(value)}
-              // disabled={!value.trim()}
+              // onClick={() => onAnalyze(value, 'graph')}
+              // disabled={!user || !value.trim() || isAnalyzing}
               // className="bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed text-white px-3 py-1 rounded text-xs font-bold flex items-center gap-1.5 transition-colors"
 //-----------------
             >
