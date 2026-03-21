@@ -67,10 +67,29 @@ export default function Chat({ channelId }: ChatProps) {
   const [showBrushUp, setShowBrushUp] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
 
-  const handleAnalyze = () => {
-    if (!newMessage.trim()) return;
-    setShowBrushUp(true);
-    analyzeDraft(newMessage);
+  const handleAnalyze = (text: string, mode: 'brushup' | 'graph' = 'brushup') => {
+    if (!text.trim()) return;
+
+    if (mode === 'graph') {
+      // グラフ表示（質問分析）のロジック
+      const match = text.match(/#(\w+)/i);
+      if (!match) {
+        alert('メッセージに #○○ の指定がありません');
+        return;
+      }
+      const mention = match[1].toLowerCase();
+      const filtered = messages.filter(m =>
+        m.text.toLowerCase().includes(`#${mention}`)
+      );
+      setAnalysisMention(mention);
+      setAnalysisMessages(filtered);
+      setAnalysisDraft(text);
+      setAnalysisPanelOpen(true);
+    } else {
+      // ブラッシュアップ（文章分析）のロジック
+      setShowBrushUp(true);
+      analyzeDraft(text);
+    }
   };
 
   const handleCloseBrushUp = () => {
@@ -244,21 +263,7 @@ export default function Chat({ channelId }: ChatProps) {
   };
 
   // Handle "質問を分析" button from MessageInput
-  const handleAnalyzeQuestion = (draftMessage: string) => {
-    const match = draftMessage.match(/#(\w+)/i);
-    if (!match) {
-      alert('メッセージに #○○ の指定がありません');
-      return;
-    }
-    const mention = match[1].toLowerCase();
-    const filtered = messages.filter(m =>
-      m.text.toLowerCase().includes(`#${mention}`)
-    );
-    setAnalysisMention(mention);
-    setAnalysisMessages(filtered);
-    setAnalysisDraft(draftMessage);
-    setAnalysisPanelOpen(true);
-  };
+  // (merged into handleAnalyze above)
 
   if (loading) {
     return (
@@ -435,7 +440,6 @@ export default function Chat({ channelId }: ChatProps) {
           onAnalyze={handleAnalyze}
           isAnalyzing={isAnalyzing}
           onAfterSend={handleAfterSend}
-          onAnalyzeQuestion={handleAnalyzeQuestion}
         />
 
       </div>
