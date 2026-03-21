@@ -111,9 +111,9 @@ export default function QuestionAnalysisPanel({
 
   return (
     <div
-      className={`fixed right-0 top-0 h-screen w-[600px] bg-[#0b1426] border-l border-gray-800
-                   transform transition-transform duration-300 z-50 flex flex-col
-                   ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
+      className={`h-full flex-shrink-0 bg-[#0b1426] border-l border-gray-800
+                   transition-all duration-300 flex flex-col overflow-hidden
+                   ${isOpen ? 'w-[400px]' : 'w-0 border-l-0'}`}
     >
       {/* Header */}
       <div className="h-14 border-b border-gray-800 flex items-center justify-between px-4 flex-shrink-0">
