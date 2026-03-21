@@ -115,8 +115,8 @@ export default function Chat({ channelId }: ChatProps) {
 
   // Add channel handler
   const handleAddChannel = async (name: string) => {
-    const id = name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9\u3040-\u9faf-]/g, "");
-    const channelId = id || `channel-${Date.now()}`;
+    const ascii = name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+    const channelId = ascii || `channel-${Date.now()}`;
     await setDoc(doc(db, "channelList", channelId), {
       name,
       createdAt: new Date(),
